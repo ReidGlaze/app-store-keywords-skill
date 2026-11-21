@@ -125,20 +125,42 @@ App Store Connect → Custom Product Pages → create a page for one keyword clu
 
 ### 9. Google Play is a separate method
 
-Play has no keyword field. It reads the title (30), short description (80) and full description (4,000); stuffing risks rejection, and price words such as "free" in the short description trigger a promotion-guideline notice.
+Play has no keyword field and publishes no search volume. It reads the title (30), short description (80) and full description (4,000). Do its research separately and write its own report; do not reuse the App Store numbers as if they were Play's.
 
-Look for Play's own data first:
+**Read the current rules first** (Google's metadata policy, store listing best practices and Health apps policy; they change). Held in November 2026:
 
-- Play Console → Grow users: acquisition by traffic source. A "search term" breakdown only appears once the app has enough Play search traffic.
-- Play Console → Store listings → Create custom listing → target audience "Search keyword" → keyword chooser. It shows historical visitors per keyword group, or "No historical search data available".
-- Google Ads Keyword Planner shows web search volume, not Play volume; treat it as a loose proxy, and only if an account already exists.
+- Title and short description: no price words ("free", "no ads"), no ranking claims ("#1", "best"), no emojis, no all caps unless it is the brand.
+- Full description: no keyword lists, no repeated or unrelated keywords, don't repeat the short description.
+- A health app that is not a medical device must say it "is not a medical device and does not diagnose, treat, cure, or prevent any medical condition", tell users to consult a healthcare professional, and state device compatibility if the camera is used for a health function.
+- Vendors agree on weight (title, then short description, then full description) and disagree on density (roughly 2-3%, or three to five natural mentions). Treat those as observations, not rules.
 
-If none of these has data, say so and use the App Store terms as a proxy. Put the main term in the title, two or three in the short description, and repeat the main terms a few times in natural sentences through the full description. A custom store listing for a search-keyword cluster can be saved as a draft for the user to review.
+**Collect, in this order:**
+
+1. **Play Console data, for every app on the account.** Grow users: expand the Acquire card and look at the breakdown menu. If "Traffic source" shows only explore, paid and direct, and not attributed, and there is no search-term dimension, record that. Other apps on the same account show how Play traffic behaves even when the target app has none. Also check Store listings → custom listing → "Search keyword" chooser, and Policy status.
+2. **Play autocomplete.** The old endpoints (`market.android.com/suggest/SuggRequest`, `suggestqueries.google.com ... ds=apps`) are dead. Type each seed into the search box on `play.google.com/store/apps` in the browser and read the five suggestions from the listbox. Type each seed twice: bare, and with a trailing space or a next letter ("skin", "skin ", "skin ch"), because the bare word is often dominated by games. Suggestions carry no volume; they show phrasing and intent.
+3. **Competitor listings.**
+
+   ```bash
+   python3 $SKILL/scripts/play_listings.py "seed one" "seed two" ...
+   ```
+
+   Writes `play-search.csv` (top 12 app ids per search) and `play-listings.json` (title, short description, installs, full description) from public Play pages. The short description is the page's `itemprop="description"` meta tag. From these, tabulate: which words are in titles, installs of the first result per search (how strong the competition is), description length, and how often the main terms repeat.
+4. **Google Trends**, target country, past 90 days, five terms per comparison. It is web search and has no Play filter. The page holds a hidden table with each term's average; read that rather than the chart. Tool phrases ("skin scanner") are usually too thin to trust; problem words ("rash") show what people actually call the thing.
+5. **Keyword Planner** gives absolute web volumes and is the best free number available, but needs a Google Ads account. Never create one; say in the report that it is worth getting and let the user decide.
+
+**Write the text:**
+
+- Title: brand plus the phrase Play itself suggests and where the first result is weakest. It can differ from the App Store name.
+- Short description: two or three more suggested phrases in one readable sentence.
+- Full description: about as long as the competitor median, main terms in the first two sentences, each term in real sentences, sections that cover the topic (how it works, what it covers, privacy, who it is for), and the required health wording.
+- Leave out any word a store has rejected before, even if it is the top suggestion; say so in the report.
+
+**Save, don't send.** In the default store listing editor: fill the fields, Next, Save. That stores the change in Publishing overview "ready to send for review". Sending for review is a separate step the user approves.
 
 ## Output
 
 - `keywords.csv` with the scores, sources and dates, plus the downloaded report and candidate files next to it.
-- A Play sheet listing what Play data existed.
+- A Play report with its own data files (autocomplete, competitor listings, Trends, Play Console findings) and the title, short and full description with reasoning.
 - Old-versus-new text for every field on each store, with character counts.
 - A plain list of what could not be measured.
 - When the user asks for a report: one Markdown file with method and sources, what each source showed and its limits, competitor findings, each recommended field with its reasoning, and the full scored table.
