@@ -62,16 +62,45 @@ python3 $SKILL/scripts/collect_candidates.py "seed one" "seed two" ...
 Writes `candidates-autocomplete.csv` (App Store search suggestions per seed, US) and `candidates-competitors.csv` (names of apps returned for each seed, with rating counts). Both use public endpoints and send only the seed terms.
 
 - Autocomplete carries no volume; it shows how people phrase searches and which brands dominate a seed.
-- Competitor names show which words the category leaders put in their titles. Subtitles and screenshot captions are not available from these endpoints; read them on the product pages if needed (an attempt to scrape subtitles from page HTML returned wrong strings).
+- Competitor names show which words the category leaders put in their titles. Drop games, shopping and unrelated apps that share a seed word before ranking by rating count.
+- **Subtitles**: fetch `https://apps.apple.com/us/app/id<id>` with a browser user agent. The app's own subtitle is the `<p class="subtitle ...">` directly after the page's `<h1>`. Do not search the page for `"subtitle":` in its embedded JSON: those belong to related apps and gave wrong strings. If no such paragraph follows the `<h1>`, the app has no subtitle; say so.
+- **Screenshot captions** are only in the images. The lookup endpoint (`https://itunes.apple.com/lookup?id=<id>&country=us`) returns `screenshotUrls`; download the first six per app, join them into a contact sheet (`ffmpeg ... hstack`), and read the captions from the image. Note which competitor claims the app can't honestly make.
 - Add the terms already in the listing and plain descriptions of what the app does, then score everything in step 3.
 
 ### 5. Astro: difficulty and current rank
 
-If the Astro MCP server is connected, `get_app_keywords` and `search_rankings` return popularity, difficulty and rank for keywords Astro already tracks. Limits found in practice:
+Astro does not need to be tracking a word already. Add every candidate to the app in Astro, let it score them, then read the scores.
 
-- The server is read-only: it cannot add keywords or trigger a refresh. Opening the Astro app refreshed popularity values, while each keyword's difficulty and rank kept an old timestamp. Record the timestamp you see.
+**Adding keywords by hand (the MCP server cannot).** Drive the Astro Mac app; it has no scripting dictionary, so use the screen:
+
+1. Select the app in Astro's sidebar and press ⌘K (Add Keywords). The dialog first loads a "most searched" list; wait for it.
+2. Put comma-separated keywords in the field and click **Add**. They appear as chips under "Keywords to be added", and Astro names any that are already tracked. Then click **Done**.
+3. **At most 50 keywords per round.** Over 50, Done shows "You inserted too many keywords" and the whole staged set is lost. Work in rounds of 40: open, paste, Add, Done, wait about 30 seconds, repeat.
+4. Scoring takes a few seconds per round. Each new keyword gets popularity, difficulty and the app's position with today's date.
+
+What worked for automation on macOS, and what didn't:
+
+- Setting the field's value through accessibility displayed the text once, then failed or timed out on later rounds. Clicking the field and pasting (⌘V) worked every time. Save and restore the user's clipboard around it.
+- The dialog is a sheet whose contents accessibility mostly can't see, so click by window-relative coordinates taken from a capture of Astro's own window (`screencapture -l <window id>` captures it without bringing it forward).
+- Before every click or keystroke, check that Astro is the frontmost app and stop if it isn't. A keystroke sent when another app has focus lands in that app.
+- Astro's toolbar Refresh did not re-score keywords that were added in an earlier year; they keep their old difficulty date. Record it.
+
+**Reading the scores.** Either the Astro MCP server (`get_app_keywords`, `search_rankings`; read-only, and it must be switched on in Astro's home screen), or Astro's local database opened read-only:
+
+```bash
+DB="$HOME/Library/Containers/matteospada.it.ASO/Data/Library/Application Support/Astro/Model.sqlite"
+sqlite3 -header -csv "file:$DB?mode=ro" "select k.ZTEXT keyword, k.ZPOPULARITY popularity, k.ZDIFFICULTY difficulty,
+  k.ZCURRENTRANKING rank, date(k.ZLASTUPDATE+978307200,'unixepoch','localtime') updated
+  from ZKEYWORD k join ZAPPLICATION a on a.Z_PK=k.ZAPPLICATION where a.ZNAME='App Name' order by 2 desc;"
+```
+
+Never write to that database. A rank of 1000 means the app is outside the results Astro tracks ("not ranked"), not position 1000. Popularity 5 is Astro's minimum.
+
+Limits:
+
 - Astro covers the App Store, not Google Play.
-- Where Astro and Apple Ads disagree on popularity, use Apple Ads.
+- Astro's popularity is its own estimate on top of Apple's data. It separates niche terms far better than the 1-5 dots, and the two mostly disagree only at the bottom (terms Apple rates 1 that Astro puts around 20). Where they disagree, use Apple Ads and treat those terms as weaker.
+- Look up every term added to Astro in the Apple Ads panel too (step 3), so both numbers exist for every row.
 
 ### 6. Score and choose
 
@@ -112,3 +141,4 @@ If none of these has data, say so and use the App Store terms as a proxy. Put th
 - A Play sheet listing what Play data existed.
 - Old-versus-new text for every field on each store, with character counts.
 - A plain list of what could not be measured.
+- When the user asks for a report: one Markdown file with method and sources, what each source showed and its limits, competitor findings, each recommended field with its reasoning, and the full scored table.
