@@ -47,6 +47,7 @@ Read the result both ways: terms that appear are high-volume head terms; a niche
 For terms below the report's floor, the only free Apple number is the 1-5 dot scale. In an existing ad group: **Add Keywords** → paste up to about 45 comma-separated candidates in the "Add keywords" box → **Add**. The staged table shows one popularity value per keyword in the order typed (`apui-wc-popularity-dots`, attribute `value`). Read them, then **Cancel** → "I'm sure", and confirm the ad group's keyword list is unchanged.
 
 - Wait for the table to render before reading; values read too early come back as 0.
+- Several batches can be staged one after another in the same panel, but each new batch is placed **above** the earlier ones. Read the values after every batch, or map the final list as newest batch first.
 - The left-hand "Related Keyword" list is a useful idea source but its dots are unreliable to scrape.
 - This needs an ad group to exist. If the account has none, don't create a campaign; report that this source is unavailable.
 - The 1-5 scale is coarse: most niche terms are 1 or 2. Use it to drop dead terms (1) and prefer 2+.
