@@ -85,6 +85,11 @@ What worked for automation on macOS, and what didn't:
 - Before every click or keystroke, check that Astro is the frontmost app and stop if it isn't. A keystroke sent when another app has focus lands in that app.
 - Astro's toolbar Refresh did not re-score keywords that were added in an earlier year; they keep their old difficulty date. Record it.
 
+**Check the app entry is the real app first.** An app added with "Add Temporary App" (generic blue icon; in the database its `ZAPPID` is a small number such as `4`, not the App Store id) gets popularity and difficulty but never a position: every keyword reads 1000. Add the live app with ⌘U (search by name, click the plus on its row) and add the keywords to that entry. Keywords added to an entry in an earlier year are not re-scored by Refresh or "Update Keywords"; a fresh entry gives today's numbers.
+
+- Window captures have an uneven shadow (about 56 pt left, 37 pt top), so convert capture coordinates with both offsets. A click a few points above a button does nothing and gives no error.
+- Paste the keyword list without a trailing line break; with one, the field looks empty although the text is in it.
+
 **Reading the scores.** Either the Astro MCP server (`get_app_keywords`, `search_rankings`; read-only, and it must be switched on in Astro's home screen), or Astro's local database opened read-only:
 
 ```bash
@@ -145,6 +150,7 @@ Play has no keyword field and publishes no search volume. It reads the title (30
    ```
 
    Writes `play-search.csv` (top 12 app ids per search) and `play-listings.json` (title, short description, installs, full description) from public Play pages. The short description is the page's `itemprop="description"` meta tag. From these, tabulate: which words are in titles, installs of the first result per search (how strong the competition is), description length, and how often the main terms repeat.
+   Also record where the app itself ranks: fetch `https://play.google.com/store/search?q=<query>&c=apps&hl=en_US&gl=US` signed out, collect the app ids in page order (about 30), and note the app's position and the first result for every query, including each phrase autocomplete suggested. This is the only "what it ranks for now" data Play offers.
 4. **Google Trends**, target country, past 90 days, five terms per comparison. It is web search and has no Play filter. The page holds a hidden table with each term's average; read that rather than the chart. Tool phrases ("skin scanner") are usually too thin to trust; problem words ("rash") show what people actually call the thing.
 5. **Keyword Planner** gives absolute web volumes and is the best free number available, but needs a Google Ads account. Never create one without the user's explicit yes. With a yes: at ads.google.com choose New Google Ads Account and look on the first screen for "Switch to Expert Mode", then "Create an account without a campaign" (business name, billing country, time zone, currency; no billing). In November 2026 that link was missing: the new account went straight into a "Create your first campaign" wizard and every account page, Keyword Planner included, redirected back to it. If that happens, stop and report it; do not build a campaign or add billing to get past it. When Keyword Planner does open: Tools → Keyword Planner → "Get search volume and forecasts" for the shortlist and "Discover new keywords" for ideas, target country, last 12 months, download the CSV next to the other data.
 
